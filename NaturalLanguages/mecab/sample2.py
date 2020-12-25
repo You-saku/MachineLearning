@@ -3,6 +3,8 @@ import MeCab
 import glob
 import numpy as np
 
+Today = "20201226"
+
 wakati = MeCab.Tagger("-Owakati")#分かち書きオブジェクト
 
 files = glob.glob("kanemura/*.txt")#ファイルないのテキストファイル全部
@@ -143,6 +145,7 @@ model.summary()
 #print(dataset.take(1))
 
 
+"""
 #1つめのバッチをテストデータ化
 for input_example_batch, target_example_batch in dataset.take(1):
     example_batch_predictions = model(input_example_batch)#ネットワークに訓練データを入力
@@ -156,5 +159,25 @@ sampled_indices = tf.squeeze(sampled_indices,axis=-1).numpy() #.squeeze -> 同�
 print("Input: \n", repr("".join(idx2char[input_example_batch[0]])))#元データを出す(通常の文章)
 print()
 print("Next Char Predictions: \n", repr("".join(idx2char[sampled_indices ])))#生成したデータで出力する(未訓練)
+"""
+
+#損失関数
+def loss(labels, logits):
+    return tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
+
+model.compile(optimizer="Adam", loss=loss)#最適化と損失関数の設定
 
 
+import os
+# チェックポイントが保存されるディレクトリ
+checkpoint_dir = '../training_log/'+Today
+# チェックポイントファイルの名称
+checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt_{epoch}")
+
+checkpoint_callback=tf.keras.callbacks.ModelCheckpoint(
+    filepath=checkpoint_prefix,
+    save_weights_only=True)
+
+EPOCHS = 10
+
+history = model.fit(dataset, epochs=EPOCHS, callbacks=[checkpoint_callback])
